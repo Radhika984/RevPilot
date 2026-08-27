@@ -38,9 +38,9 @@ router.get("/me", async (req: Request, res: Response) => {
   });
 
   if (!merchant) {
-    // Valid Clerk session, but no merchant row yet (webhook may not have
-    // landed yet — webhooks are eventually consistent per Clerk's docs).
-    return res.status(404).json({ error: "Merchant not found for this user" });
+    return res.status(404).json({
+      error: "Merchant not found for this user",
+    });
   }
 
   return res.status(200).json({
