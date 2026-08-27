@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum RiskEventSourceType {
+  subscription
+  payment
+  payment_link
+  settlement
+}
+
+enum RiskEventStatus {
+  open
+  resolved
+  ignored
+}
+
+enum PlaybookStatus {
+  generated
+  executing
+  escalated
+  awaiting_approval
+  closed
+}
+
+enum RecoveryActionStrategy {
+  retry
+  wait
+  payment_link
+  escalate
+  human_approval
+  ignore
+}
+
+enum RecoveryActionOutcome {
+  succeeded
+  failed
+  pending
+  skipped
+}
+
+enum ApprovalTriggerReason {
+  ceiling_breach
+  daily_cap_breach
+  low_confidence
+}
+
+enum ApprovalDecision {
+  pending
+  approved
+  rejected
+  modified
+}
+
+enum AuditEntityType {
+  risk_event
+  playbook
+  recovery_action
+  approval
+}
+
+enum PolicyModule {
+  subscription
+  payment
+  payment_link
+  settlement
+}
+
+// ============================================================
+// MODELS — exactly 7 application tables (Part 6)
+// ============================================================
+
+model Merchant {
+  id                  String   @id @default(uuid())
+  business_name       String
+  email               String   @unique
+  clerk_user_id       String   @unique
+  razorpay_account_id String?
+  created_at          DateTime @default(now())
+
+  risk_events       RiskEvent[]
+  audit_ledger      AuditLedger[]
+  merchant_policies MerchantPolicy[]
+
+  @@map("merchants")
+}
+
+model RiskEvent {
+  id           String              @id @default(uuid())
+  merchant_id  String
+  source_type  RiskEventSourceType
+  root_cause   String
+  amount       Decimal             @db.Decimal(12, 2)
+  raw_payload  Json
+  status       RiskEventStatus
+  created_at   DateTime            @default(now())
+
+  merchant  Merchant   @relation(fields: [merchant_id], references: [id])
+  playbooks Playbook[]
+
+  @@index([merchant_id])
+  @@index([status])
+  @@index([source_type])
+  @@map("risk_events")
+}
+
+model Playbook {
+  id                      String         @id @default(uuid())
+  risk_event_id           String
+  root_cause              String
+  recovery_probability    Decimal        @db.Decimal(5, 4)
+  recovery_value          Decimal        @db.Decimal(12, 2)
+  recommended_sequence    Json
+  waiting_period_seconds  Int
+  stopping_rule           Json
+  explainable_reasoning   String
+  chain_depth             Int
+  status                  PlaybookStatus
+  created_at              DateTime       @default(now())
+
+  risk_event       RiskEvent         @relation(fields: [risk_event_id], references: [id])
+  recovery_actions RecoveryAction[]
+  approvals        Approval[]
+
+  @@index([risk_event_id])
+  @@index([status])
+  @@map("playbooks")
+}
+
+model RecoveryAction {
+  id                     String                  @id @default(uuid())
+  playbook_id            String
+  step_number            Int
+  strategy               RecoveryActionStrategy
+  confidence             Decimal                 @db.Decimal(5, 4)
+  expected_value         Decimal                 @db.Decimal(12, 2)
+  outcome                RecoveryActionOutcome
+  razorpay_reference_id  String
+  executed_at            DateTime
+
+  playbook Playbook @relation(fields: [playbook_id], references: [id])
+
+  @@index([playbook_id])
+  @@index([outcome])
+  @@map("recovery_actions")
+}
+
+model Approval {
+  id                  String                @id @default(uuid())
+  playbook_id         String
+  trigger_reason      ApprovalTriggerReason
+  recommended_action  Json
+  approver_email      String
+  decision            ApprovalDecision
+  modified_amount     Decimal?              @db.Decimal(12, 2)
+  decided_at          DateTime?
+
+  playbook Playbook @relation(fields: [playbook_id], references: [id])
+
+  @@index([playbook_id])
+  @@index([decision])
+  @@map("approvals")
+}
+
+model AuditLedger {
+  id                  String          @id @default(uuid())
+  merchant_id         String
+  entity_type         AuditEntityType
+  entity_id           String
+  event_description   String
+  previous_hash       String?
+  entry_hash          String?
+  created_at          DateTime        @default(now())
+
+  merchant Merchant @relation(fields: [merchant_id], references: [id])
+
+  @@index([merchant_id])
+  @@index([created_at])
+  @@index([entity_type])
+  @@map("audit_ledger")
+}
+
+model MerchantPolicy {
+  id                 String       @id @default(uuid())
+  merchant_id        String
+  module             PolicyModule
+  ceiling_amount     Decimal      @db.Decimal(12, 2)
+  daily_cap          Decimal      @db.Decimal(12, 2)
+  min_confidence     Decimal      @db.Decimal(5, 4)
+  strategy_toggles   Json
+  updated_at         DateTime     @updatedAt
+
+  merchant Merchant @relation(fields: [merchant_id], references: [id])
+
+  @@unique([merchant_id, module])
+  @@map("merchant_policies")
+}
