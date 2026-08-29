@@ -2,8 +2,9 @@ import { Queue } from "bullmq";
 import { redisConnection } from "./redis";
 
 /**
- * One BullMQ Queue per webhook source type, all sharing the single
- * Redis connection from ./redis.ts. Queue instances are created once at
+ * One BullMQ Queue per webhook source type (Phase 3), plus one queue for
+ * the Phase 5 Adaptive Playbook Engine, all sharing the single Redis
+ * connection from ./redis.ts. Queue instances are created once at
  * module load (and cached on `global` the same way Prisma/Redis are, so
  * ts-node-dev hot reload doesn't recreate them) — never per-request.
  */
@@ -11,12 +12,14 @@ export const QUEUE_NAMES = {
   subscription: "subscription",
   payment: "payment",
   paymentLink: "payment-link",
+  playbookEngine: "playbook-engine",
 } as const;
 
 const globalForQueues = global as unknown as {
   subscriptionQueue?: Queue;
   paymentQueue?: Queue;
   paymentLinkQueue?: Queue;
+  playbookEngineQueue?: Queue;
 };
 
 export const subscriptionQueue: Queue =
@@ -31,8 +34,13 @@ export const paymentLinkQueue: Queue =
   globalForQueues.paymentLinkQueue ??
   new Queue(QUEUE_NAMES.paymentLink, { connection: redisConnection });
 
+export const playbookEngineQueue: Queue =
+  globalForQueues.playbookEngineQueue ??
+  new Queue(QUEUE_NAMES.playbookEngine, { connection: redisConnection });
+
 if (process.env.NODE_ENV !== "production") {
   globalForQueues.subscriptionQueue = subscriptionQueue;
   globalForQueues.paymentQueue = paymentQueue;
   globalForQueues.paymentLinkQueue = paymentLinkQueue;
+  globalForQueues.playbookEngineQueue = playbookEngineQueue;
 }

@@ -8,6 +8,8 @@ import { clerkMiddleware } from "@clerk/express";
 import clerkWebhookRouter from "./routes/webhooks.clerk";
 import razorpayWebhookRouter from "./routes/webhooks.razorpay";
 import meRouter from "./routes/me";
+import playbooksRouter from "./routes/playbooks";
+import riskEventsRouter from "./routes/riskEvents";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -51,6 +53,10 @@ app.use(express.json());
 app.use(clerkMiddleware());
 
 app.use("/api", meRouter);
+// Phase 5: read-only playbook + risk-event APIs. Same auth pattern as
+// meRouter — getAuth() + manual 401 JSON, merchant-scoped queries.
+app.use("/api", playbooksRouter);
+app.use("/api", riskEventsRouter);
 
 // --- Only bind a listener when this file is executed directly (e.g.
 //     `ts-node-dev src/index.ts`, `node dist/index.js`). When the app is

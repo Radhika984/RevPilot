@@ -1,6 +1,6 @@
 import { Worker, Job } from "bullmq";
 import { redisConnection } from "../lib/redis";
-import { QUEUE_NAMES } from "../lib/queues";
+import { QUEUE_NAMES, playbookEngineQueue } from "../lib/queues";
 import { prisma } from "../lib/prisma";
 import { buildDecision, buildPlaybookCreateData } from "../services/decision-engine/engine";
 import { DecisionEngineInput } from "../services/decision-engine/types";
@@ -47,8 +47,9 @@ async function processRiskEventJob(job: Job): Promise<void> {
   const decision = buildDecision(engineInput);
   const playbookData = buildPlaybookCreateData(riskEvent.id, decision);
 
+  let playbook;
   try {
-    const playbook = await prisma.playbook.create({ data: playbookData });
+    playbook = await prisma.playbook.create({ data: playbookData });
     console.log(
       `Created draft playbook ${playbook.id} for risk_event_id=${riskEvent.id} ` +
         `(root_cause=${playbook.root_cause}, status=${playbook.status})`
@@ -56,6 +57,26 @@ async function processRiskEventJob(job: Job): Promise<void> {
   } catch (err) {
     console.error(`Failed to create playbook for risk_event_id=${riskEvent.id}:`, err);
     throw err; // let BullMQ retry the job
+  }
+
+  // Phase 5: hand the freshly created draft playbook off to the
+  // Adaptive Playbook Engine worker. jobId: playbook.id makes this
+  // enqueue idempotent at the BullMQ level too (same pattern as the
+  // Phase 3 -> Phase 4 enqueue in webhooks.razorpay.ts).
+  //
+  // Failure to enqueue must NOT throw here: the Phase 4 playbook row was
+  // already committed successfully, so rethrowing would cause BullMQ to
+  // retry this whole job and re-run Phase 4 logic (harmless thanks to
+  // the existingPlaybook guard above, but pointless and noisy) instead
+  // of just retrying the Phase 5 handoff.
+  try {
+    await playbookEngineQueue.add(
+      "run-waterfall",
+      { playbookId: playbook.id },
+      { jobId: playbook.id }
+    );
+  } catch (err) {
+    console.error(`Failed to enqueue Phase 5 waterfall job for playbookId=${playbook.id}:`, err);
   }
 }
 
