@@ -6,6 +6,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import clerkWebhookRouter from "./routes/webhooks.clerk";
+import razorpayWebhookRouter from "./routes/webhooks.razorpay";
 import meRouter from "./routes/me";
 
 const app = express();
@@ -24,14 +25,22 @@ app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({ status: "ok" });
 });
 
-// --- Clerk webhook: MUST come before express.json() and MUST NOT
-//     have clerkMiddleware()/requireAuth() applied. verifyWebhook()
-//     needs the raw, unparsed body to check the Svix signature. ---
+// --- Clerk webhook + Razorpay webhooks: MUST come before express.json()
+//     and MUST NOT have clerkMiddleware()/requireAuth() applied.
+//     Both verifyWebhook() (Clerk/Svix) and the Razorpay HMAC check need
+//     the raw, unparsed body to verify their respective signatures.
+//     express.raw() is applied once for the whole /api/webhooks prefix;
+//     each router below only declares the specific sub-paths it owns, and
+//     an Express Router automatically falls through to the next mounted
+//     router when a path doesn't match one of its own routes — so mounting
+//     both routers on the same prefix is safe and does not affect the
+//     already-working Clerk webhook route. ---
 app.use(
   "/api/webhooks",
   express.raw({ type: "application/json" }),
   clerkWebhookRouter
 );
+app.use("/api/webhooks", razorpayWebhookRouter);
 
 // --- Everything below this line gets JSON parsing + Clerk session
 //     detection. clerkMiddleware() only attaches req.auth; it does

@@ -95,14 +95,15 @@ model Merchant {
 }
 
 model RiskEvent {
-  id           String              @id @default(uuid())
-  merchant_id  String
-  source_type  RiskEventSourceType
-  root_cause   String
-  amount       Decimal             @db.Decimal(12, 2)
-  raw_payload  Json
-  status       RiskEventStatus
-  created_at   DateTime            @default(now())
+  id                String              @id @default(uuid())
+  merchant_id       String
+  source_type       RiskEventSourceType
+  root_cause        String
+  amount            Decimal             @db.Decimal(12, 2)
+  raw_payload       Json
+  raw_payload_hash  String              @unique
+  status            RiskEventStatus
+  created_at        DateTime            @default(now())
 
   merchant  Merchant   @relation(fields: [merchant_id], references: [id])
   playbooks Playbook[]
