@@ -10,6 +10,12 @@ import razorpayWebhookRouter from "./routes/webhooks.razorpay";
 import meRouter from "./routes/me";
 import playbooksRouter from "./routes/playbooks";
 import riskEventsRouter from "./routes/riskEvents";
+import approvalsRouter from "./routes/approvals";
+import revenueRouter from "./routes/revenue";
+import auditRouter from "./routes/audit";
+import policiesRouter from "./routes/policies";
+import analyticsRouter from "./routes/analytics";
+import { apiLimiter, webhookLimiter } from "./middleware/rateLimiter";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -39,10 +45,11 @@ app.get("/health", (_req: Request, res: Response) => {
 //     already-working Clerk webhook route. ---
 app.use(
   "/api/webhooks",
+  webhookLimiter,
   express.raw({ type: "application/json" }),
   clerkWebhookRouter
 );
-app.use("/api/webhooks", razorpayWebhookRouter);
+app.use("/api/webhooks", webhookLimiter, razorpayWebhookRouter);
 
 // --- Everything below this line gets JSON parsing + Clerk session
 //     detection. clerkMiddleware() only attaches req.auth; it does
@@ -52,11 +59,29 @@ app.use("/api/webhooks", razorpayWebhookRouter);
 app.use(express.json());
 app.use(clerkMiddleware());
 
+// Phase 12: coarse baseline rate limiting for every authenticated
+// /api/* route below (the two webhook routers above already have
+// their own, stricter limiter and are never reached by this one).
+app.use("/api", apiLimiter);
+
 app.use("/api", meRouter);
-// Phase 5: read-only playbook + risk-event APIs. Same auth pattern as
-// meRouter — getAuth() + manual 401 JSON, merchant-scoped queries.
+// Phase 5: read-only playbook + risk-event APIs, same auth pattern as
+// meRouter (getAuth() + manual 401 JSON, merchant-scoped queries).
 app.use("/api", playbooksRouter);
 app.use("/api", riskEventsRouter);
+// Phase 6: approval routing APIs, same auth pattern as the above.
+app.use("/api", approvalsRouter);
+// Phase 8: merchant-scoped revenue aggregation APIs for the Revenue
+// War Room, same auth pattern as the above.
+app.use("/api", revenueRouter);
+// Phase 10: read-only audit ledger listing + hash-chain verification
+// APIs, same auth pattern as the above.
+app.use("/api", auditRouter);
+// Phase 11: merchant policy CRUD (read by services/policy-engine/
+// policyGate.ts on every run, no caching) and read-only recovery
+// analytics APIs, same auth pattern as the above.
+app.use("/api", policiesRouter);
+app.use("/api", analyticsRouter);
 
 // --- Only bind a listener when this file is executed directly (e.g.
 //     `ts-node-dev src/index.ts`, `node dist/index.js`). When the app is

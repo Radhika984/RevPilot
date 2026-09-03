@@ -4,6 +4,7 @@ import { QUEUE_NAMES, playbookEngineQueue } from "../lib/queues";
 import { prisma } from "../lib/prisma";
 import { buildDecision, buildPlaybookCreateData } from "../services/decision-engine/engine";
 import { DecisionEngineInput } from "../services/decision-engine/types";
+import { generateAndStoreExplanation } from "../services/sentinel-ai/explainPlaybook";
 
 /**
  * Processes exactly one Phase 3 webhook job: load the risk_events row it
@@ -59,16 +60,25 @@ async function processRiskEventJob(job: Job): Promise<void> {
     throw err; // let BullMQ retry the job
   }
 
-  // Phase 5: hand the freshly created draft playbook off to the
-  // Adaptive Playbook Engine worker. jobId: playbook.id makes this
-  // enqueue idempotent at the BullMQ level too (same pattern as the
-  // Phase 3 -> Phase 4 enqueue in webhooks.razorpay.ts).
+  // Phase 7: fire-and-forget Sentinel AI explanation generation. This is
+  // intentionally NOT awaited and NEVER throws (see
+  // generateAndStoreExplanation's own internal try/catch) — it must not
+  // delay or gate the deterministic Phase 4 -> 5/6 handoff below. On
+  // any AI failure, the deterministic explainable_reasoning already
+  // written by buildPlaybookCreateData above remains in place.
+  void generateAndStoreExplanation(playbook.id);
+
+  // Phase 5/6: hand the freshly created draft playbook off to the
+  // Adaptive Playbook Engine + Policy Engine worker. jobId: playbook.id
+  // makes this enqueue idempotent at the BullMQ level too (matches the
+  // pattern used for Phase 3 -> Phase 4 enqueueing in
+  // webhooks.razorpay.ts).
   //
-  // Failure to enqueue must NOT throw here: the Phase 4 playbook row was
-  // already committed successfully, so rethrowing would cause BullMQ to
-  // retry this whole job and re-run Phase 4 logic (harmless thanks to
-  // the existingPlaybook guard above, but pointless and noisy) instead
-  // of just retrying the Phase 5 handoff.
+  // Failure to enqueue must NOT throw here: the Phase 4 playbook row
+  // was already committed successfully, so rethrowing would cause
+  // BullMQ to retry this job and re-run Phase 4 logic (harmless thanks
+  // to the existingPlaybook guard above, but pointless and noisy)
+  // instead of just retrying the Phase 5/6 handoff.
   try {
     await playbookEngineQueue.add(
       "run-waterfall",

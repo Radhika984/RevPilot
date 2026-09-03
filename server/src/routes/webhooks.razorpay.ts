@@ -27,7 +27,9 @@ function isValidRazorpaySignature(
   const expectedBuffer = Buffer.from(expected, "utf8");
   const providedBuffer = Buffer.from(signatureHeader, "utf8");
 
-  if (expectedBuffer.length !== providedBuffer.length) return false;
+  if (expectedBuffer.length !== providedBuffer.length) {
+    return false;
+  }
 
   return crypto.timingSafeEqual(
     expectedBuffer,
@@ -38,10 +40,7 @@ function isValidRazorpaySignature(
 function extractAmountInRupees(
   event: Record<string, unknown>
 ): number {
-  const payload = (event?.payload ?? {}) as Record<
-    string,
-    unknown
-  >;
+  const payload = (event.payload ?? {}) as Record<string, unknown>;
 
   const candidates = [
     (payload.payment as any)?.entity?.amount,
@@ -50,7 +49,7 @@ function extractAmountInRupees(
   ];
 
   const amountInPaise = candidates.find(
-    (v) => typeof v === "number"
+    (value) => typeof value === "number"
   ) as number | undefined;
 
   return amountInPaise !== undefined
@@ -68,7 +67,9 @@ function hashRawBody(rawBody: Buffer): string {
 function normalizeAccountId(
   raw: unknown
 ): string | undefined {
-  if (typeof raw !== "string") return undefined;
+  if (typeof raw !== "string") {
+    return undefined;
+  }
 
   const trimmed = raw.trim();
 
@@ -85,8 +86,7 @@ function buildWebhookHandler(
     req: Request,
     res: Response
   ) => {
-    const secret =
-      process.env.RAZORPAY_WEBHOOK_SECRET;
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
     if (!secret) {
       console.error(
@@ -101,7 +101,7 @@ function buildWebhookHandler(
     const rawBody = req.body as Buffer;
 
     const signatureHeader =
-      req.header("x-razorpay-signature");
+      req.header("x-razorpay-signature") ?? undefined;
 
     if (
       !isValidRazorpaySignature(
@@ -124,7 +124,7 @@ function buildWebhookHandler(
     try {
       event = JSON.parse(
         rawBody.toString("utf8")
-      );
+      ) as Record<string, unknown>;
     } catch (err) {
       console.error(
         "Failed to parse verified Razorpay webhook body:",
@@ -139,55 +139,6 @@ function buildWebhookHandler(
     const accountId = normalizeAccountId(
       event.account_id
     );
-
-    // ============================================================
-    // TEMPORARY DIAGNOSTIC
-    // This tells us exactly what database and merchant records
-    // the RUNNING backend process can actually see.
-    // ============================================================
-
-    const dbInfo = await prisma.$queryRaw<
-      {
-        current_database: string;
-        port: string;
-      }[]
-    >`
-      SELECT
-        current_database(),
-        inet_server_port()::text AS port
-    `;
-
-    console.log(
-      "DIAG connected to:",
-      dbInfo
-    );
-
-    const allMerchants =
-      await prisma.merchant.findMany({
-        select: {
-          id: true,
-          razorpay_account_id: true,
-        },
-      });
-
-    console.log(
-      "DIAG merchants visible to this process:",
-      JSON.stringify(allMerchants)
-    );
-
-    console.log(
-      "DIAG accountId from payload (char codes):",
-      accountId,
-      accountId
-        ? [...accountId].map((c) =>
-            c.charCodeAt(0)
-          )
-        : null
-    );
-
-    // ============================================================
-    // END TEMPORARY DIAGNOSTIC
-    // ============================================================
 
     const merchant = accountId
       ? await prisma.merchant.findFirst({
@@ -208,8 +159,7 @@ function buildWebhookHandler(
       });
     }
 
-    const rawPayloadHash =
-      hashRawBody(rawBody);
+    const rawPayloadHash = hashRawBody(rawBody);
 
     const rootCause =
       typeof event.event === "string"

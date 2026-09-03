@@ -1,55 +1,95 @@
-import { useEffect } from "react";
-import { useAuth } from "@clerk/react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./components/protected-route/ProtectedRoute";
+import { AppShell } from "@/components/layout/AppShell";
+import { RevenueWarRoom } from "@/pages/RevenueWarRoom";
+import { RecoveryQueue } from "@/pages/RecoveryQueue";
+import { Playbooks } from "@/pages/Playbooks";
+import { Approvals } from "@/pages/Approvals";
+import { AuditLedger } from "@/pages/AuditLedger";
+import { Analytics } from "@/pages/Analytics";
+import { MerchantPolicies } from "@/pages/MerchantPolicies";
+import { NotFound } from "@/pages/NotFound";
 
-function ApiMeFetcher() {
-  const { getToken, isSignedIn } = useAuth();
-
-  useEffect(() => {
-    if (!isSignedIn) return;
-
-    const fetchMe = async () => {
-      try {
-        const token = await getToken();
-        if (!token) {
-          console.error("Verification: No token obtained from Clerk");
-          return;
-        }
-
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
-        const response = await fetch(`${apiUrl}/api/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        console.log(`[Verification] GET /api/me response status: ${response.status}`);
-        if (response.status === 200) {
-          const data = await response.json();
-          console.log("[Verification] GET /api/me 200 OK data:", data);
-        } else if (response.status === 404) {
-          const data = await response.json().catch(() => ({}));
-          console.log("[Verification] GET /api/me 404 Merchant Not Found:", data);
-        } else {
-          const text = await response.text();
-          console.error(`[Verification] GET /api/me ${response.status} Error:`, text);
-        }
-      } catch (err) {
-        console.error("[Verification] GET /api/me failed:", err);
-      }
-    };
-
-    fetchMe();
-  }, [getToken, isSignedIn]);
-
-  return null;
-}
-
+/**
+ * RevPilot now has seven authenticated screens (Phase 11 adds Recovery
+ * Analytics and Merchant Policies alongside Phase 8-10's Revenue War
+ * Room, Recovery Queue, Playbook Detail timeline, Approval Inbox, and
+ * Audit Ledger). ProtectedRoute still gates all of them the same way
+ * it gated the single screen before: unauthenticated visitors see
+ * LoginPage regardless of path, authenticated merchants get the
+ * router.
+ */
 function App() {
   return (
     <ProtectedRoute>
-      <ApiMeFetcher />
-      <div className="min-h-screen bg-background" />
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <AppShell title="Revenue War Room">
+                <RevenueWarRoom />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/recovery-queue"
+            element={
+              <AppShell title="Recovery Queue">
+                <RecoveryQueue />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/playbooks/:id"
+            element={
+              <AppShell title="Playbook Detail">
+                <Playbooks />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/approvals"
+            element={
+              <AppShell title="Approval Inbox">
+                <Approvals />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/audit-ledger"
+            element={
+              <AppShell title="Audit Ledger">
+                <AuditLedger />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <AppShell title="Recovery Analytics">
+                <Analytics />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/policies"
+            element={
+              <AppShell title="Merchant Policies">
+                <MerchantPolicies />
+              </AppShell>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <AppShell title="Not Found">
+                <NotFound />
+              </AppShell>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
     </ProtectedRoute>
   );
 }
