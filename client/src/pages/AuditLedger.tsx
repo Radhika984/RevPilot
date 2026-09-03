@@ -68,7 +68,7 @@ export function AuditLedger() {
       ) : null}
 
       <section className="rounded-lg border border-border bg-card">
-        <div className="flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-border bg-muted/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Ledger entries</h3>
             <p className="text-xs text-muted-foreground">Newest first</p>

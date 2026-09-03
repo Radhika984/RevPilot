@@ -47,7 +47,7 @@ export function RecoveryQueueTable({
     <div className="overflow-x-auto">
       <table className="w-full min-w-[860px] text-left text-sm">
         <thead>
-          <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b border-border bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <th className="px-5 py-3 font-medium">Root cause</th>
             <th className="px-5 py-3 font-medium">Source</th>
             <th className="px-5 py-3 font-medium">Status</th>
@@ -63,7 +63,7 @@ export function RecoveryQueueTable({
             <tr
               key={item.id}
               onClick={() => onSelect(item.id)}
-              className="cursor-pointer hover:bg-muted/40"
+              className="cursor-pointer transition-colors hover:bg-muted/40"
             >
               <td className="px-5 py-4 font-medium text-foreground">
                 {formatRootCause(item.root_cause)}
@@ -85,7 +85,7 @@ export function RecoveryQueueTable({
               <td className="px-5 py-4 text-muted-foreground">
                 {formatDateTime(item.created_at)}
               </td>
-              <td className="px-5 py-4 text-right font-medium tabular-nums text-foreground">
+              <td className="px-5 py-4 text-right font-semibold tabular-nums text-foreground">
                 {formatCurrency(item.recovery_value)}
               </td>
               <td className="px-5 py-4 text-right">

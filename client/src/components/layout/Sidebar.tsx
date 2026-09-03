@@ -45,17 +45,17 @@ function SidebarContent() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center gap-2 border-b border-border px-5">
-        <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+      <div className="flex h-16 items-center gap-2.5 border-b border-border px-5">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm shadow-primary/30">
           <ShieldCheck className="size-4.5" />
         </div>
         <div className="leading-tight">
-          <p className="text-sm font-semibold text-foreground">RevPilot</p>
-          <p className="text-[11px] text-muted-foreground">Revenue Operations</p>
+          <p className="text-sm font-semibold tracking-tight text-foreground">RevPilot</p>
+          <p className="text-[11px] font-medium text-muted-foreground">Revenue Operations</p>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           if (item.to) {
@@ -70,13 +70,13 @@ function SidebarContent() {
                 onClick={closeMobileNav}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-secondary text-secondary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? "border-l-primary bg-primary/8 text-primary"
+                    : "border-l-transparent text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
               >
-                <Icon className="size-4" />
+                <Icon className={cn("size-4", isActive && "text-primary")} />
                 {item.label}
               </NavLink>
             );

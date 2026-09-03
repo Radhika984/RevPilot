@@ -89,19 +89,21 @@ export function RevenueWarRoom() {
             value={formatPercent(summary.data.recovery_rate)}
             helpText="Recovered vs. all resolved attempts"
             icon={Gauge}
+            tone="info"
           />
           <MetricCard
             label="Pending approvals"
             value={String(summary.data.pending_approvals_count)}
             helpText="Awaiting a manual decision"
             icon={Inbox}
+            tone="brand"
           />
         </div>
       ) : null}
 
       {/* At-risk revenue */}
       <section className="rounded-lg border border-border bg-card">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-5 py-4">
           <div>
             <h3 className="text-sm font-semibold text-foreground">
               Revenue at risk
@@ -121,7 +123,7 @@ export function RevenueWarRoom() {
 
       {/* Recovered revenue */}
       <section className="rounded-lg border border-border bg-card">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-5 py-4">
           <div>
             <h3 className="text-sm font-semibold text-foreground">
               Recently recovered

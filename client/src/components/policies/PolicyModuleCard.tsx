@@ -3,6 +3,7 @@ import { Loader2, Save } from "lucide-react";
 import type { MerchantPolicyItem, StrategyToggles } from "@/hooks/usePolicies";
 import { Button } from "@/components/ui/button";
 import { formatDateTime, formatSourceType, formatStrategy } from "@/lib/format";
+import { badgeClassName } from "@/lib/playbookVisuals";
 import { cn } from "@/lib/utils";
 
 const STRATEGY_KEYS = Object.keys({
@@ -68,7 +69,12 @@ export function PolicyModuleCard({ policy, onSave, isSaving, saveError }: Policy
   };
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5">
+    <div
+      className={cn(
+        "rounded-lg border border-border bg-card p-5",
+        !policy.configured && "border-l-4 border-l-amber-500"
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-foreground">
@@ -81,9 +87,7 @@ export function PolicyModuleCard({ policy, onSave, isSaving, saveError }: Policy
           </p>
         </div>
         {!policy.configured ? (
-          <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
-            Unconfigured
-          </span>
+          <span className={cn("shrink-0", badgeClassName("risk"))}>Unconfigured</span>
         ) : null}
       </div>
 
@@ -125,7 +129,9 @@ export function PolicyModuleCard({ policy, onSave, isSaving, saveError }: Policy
       </div>
 
       <div className="mt-4">
-        <span className="text-xs font-medium text-muted-foreground">Strategy toggles</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Strategy toggles
+        </span>
         <div className="mt-2 flex flex-wrap gap-2">
           {STRATEGY_KEYS.map((strategy) => {
             const enabled = toggles[strategy];
@@ -137,10 +143,10 @@ export function PolicyModuleCard({ policy, onSave, isSaving, saveError }: Policy
                 aria-checked={enabled}
                 onClick={() => setToggles((prev) => ({ ...prev, [strategy]: !prev[strategy] }))}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
                   enabled
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
-                    : "border-border bg-muted text-muted-foreground"
+                    ? "border-emerald-600/20 bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
+                    : "border-border bg-muted text-muted-foreground hover:bg-accent"
                 )}
               >
                 {formatStrategy(strategy)}

@@ -1,6 +1,7 @@
 import type { RecoveredItem } from "@/hooks/useRevenue";
 import { formatCurrency, formatDateTime, formatRootCause, formatSourceType, formatStrategy } from "@/lib/format";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/revenue/QueryState";
+import { badgeClassName } from "@/lib/playbookVisuals";
 
 interface RecoveredTableProps {
   items: RecoveredItem[] | undefined;
@@ -31,7 +32,7 @@ export function RecoveredTable({ items, isLoading, isError, onRetry }: Recovered
     <div className="overflow-x-auto">
       <table className="w-full min-w-[720px] text-left text-sm">
         <thead>
-          <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b border-border bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <th className="px-5 py-3 font-medium">Root cause</th>
             <th className="px-5 py-3 font-medium">Source</th>
             <th className="px-5 py-3 font-medium">Strategy used</th>
@@ -41,7 +42,7 @@ export function RecoveredTable({ items, isLoading, isError, onRetry }: Recovered
         </thead>
         <tbody className="divide-y divide-border">
           {items.map((item) => (
-            <tr key={item.id} className="hover:bg-muted/40">
+            <tr key={item.id} className="transition-colors hover:bg-muted/40">
               <td className="px-5 py-4 font-medium text-foreground">
                 {formatRootCause(item.root_cause)}
               </td>
@@ -49,14 +50,14 @@ export function RecoveredTable({ items, isLoading, isError, onRetry }: Recovered
                 {formatSourceType(item.source_type)}
               </td>
               <td className="px-5 py-4 text-muted-foreground">
-                <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                <span className={badgeClassName("positive")}>
                   {formatStrategy(item.strategy)}
                 </span>
               </td>
               <td className="px-5 py-4 text-muted-foreground">
                 {formatDateTime(item.recovered_at)}
               </td>
-              <td className="px-5 py-4 text-right font-medium tabular-nums text-emerald-700 dark:text-emerald-400">
+              <td className="px-5 py-4 text-right font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                 {formatCurrency(item.amount)}
               </td>
             </tr>

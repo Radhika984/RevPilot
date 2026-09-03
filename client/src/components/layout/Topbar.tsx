@@ -24,13 +24,16 @@ export function Topbar({ title }: TopbarProps) {
         <Menu className="size-5" />
       </button>
 
-      <h1 className="text-base font-semibold text-foreground">{title}</h1>
+      <h1 className="text-base font-semibold tracking-tight text-foreground">{title}</h1>
 
       <div className="ml-auto flex items-center gap-3">
         {isLoaded && displayName ? (
-          <span className="hidden text-sm text-muted-foreground sm:inline">
+          <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
             {displayName}
           </span>
+        ) : null}
+        {isLoaded && displayName ? (
+          <span className="hidden h-6 w-px bg-border sm:block" aria-hidden="true" />
         ) : null}
         {/* No afterSignOutUrl prop on this Clerk version — sign-out is
             handled entirely client-side: once the session clears,

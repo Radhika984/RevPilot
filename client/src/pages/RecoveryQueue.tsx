@@ -38,7 +38,7 @@ export function RecoveryQueue() {
       </div>
 
       <section className="rounded-lg border border-border bg-card">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-5 py-4">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Playbooks</h3>
             <p className="text-xs text-muted-foreground">

@@ -4,25 +4,52 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Phase 12: bumped from 0.625rem for a slightly more generous, premium
+     feel. --radius-lg (mapped below) is what every existing "rounded-lg"
+     card/section throughout the app already uses, so this one change
+     softens every card in the product without touching each file. */
+  --radius: 0.75rem;
+
+  /* Phase 12: previously flat pure-white-on-white (0 chroma everywhere).
+     Background is now a very subtle cool slate tint so white content
+     surfaces (--card) read as distinct, elevated layers instead of
+     blending into the page. Foreground/muted-foreground also shifted
+     from neutral grey to a cool slate hue for a less generic, more
+     "financial software" feel. */
+  --background: oklch(0.984 0.003 247.858);
+  --foreground: oklch(0.208 0.042 265.755);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.208 0.042 265.755);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.208 0.042 265.755);
+
+  /* Phase 12: brand primary — was neutral near-black (0 chroma). Now a
+     refined indigo, used for primary buttons, focus rings, active nav
+     state, and links via the existing --primary/--ring tokens. */
+  --primary: oklch(0.511 0.262 276.966);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.279 0.041 260.031);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: oklch(0.929 0.013 255.508);
+  --accent-foreground: oklch(0.279 0.041 260.031);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.511 0.262 276.966 / 40%);
+
+  /* Phase 12: additive semantic tokens for the risk/recovery/approval
+     color language used across MetricCard, playbookVisuals badge tones,
+     and chart colors. Pure additions — no existing token renamed or
+     removed, so nothing that already reads var(--destructive) etc. is
+     affected. */
+  --success: oklch(0.596 0.145 163.225);
+  --success-foreground: oklch(0.984 0.003 247.858);
+  --warning: oklch(0.666 0.179 58.318);
+  --warning-foreground: oklch(0.984 0.003 247.858);
+  --info: oklch(0.546 0.215 262.881);
+  --info-foreground: oklch(0.984 0.003 247.858);
 }
 
 .dark {
@@ -32,8 +59,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.585 0.233 277.117);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -44,6 +71,12 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+  --success: oklch(0.696 0.17 162.48);
+  --success-foreground: oklch(0.145 0 0);
+  --warning: oklch(0.769 0.188 70.08);
+  --warning-foreground: oklch(0.145 0 0);
+  --info: oklch(0.623 0.214 259.815);
+  --info-foreground: oklch(0.145 0 0);
 }
 
 @theme inline {
@@ -65,6 +98,12 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -73,4 +112,19 @@
 
 body {
   @apply bg-background text-foreground;
+}
+
+/* Phase 12: every content surface in the app (metric cards, table
+   sections, the sidebar, the topbar, timeline nodes, chart panels)
+   already uses Tailwind's `bg-card` utility on a bordered container —
+   that's the one thing every "surface" in this codebase has in common.
+   Giving that utility itself a very subtle shadow gives every existing
+   surface a bit of lift off the new tinted --background in one place,
+   instead of hand-adding a shadow className across a dozen files. */
+@layer utilities {
+  .bg-card {
+    box-shadow:
+      0 1px 2px 0 rgb(15 23 42 / 0.04),
+      0 1px 3px -1px rgb(15 23 42 / 0.03);
+  }
 }

@@ -40,7 +40,7 @@ export function AuditLedgerTable({
     <div className="overflow-x-auto">
       <table className="w-full min-w-[960px] text-left text-sm">
         <thead>
-          <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b border-border bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <th className="px-5 py-3 font-medium">Entity</th>
             <th className="px-5 py-3 font-medium">Entity ID</th>
             <th className="px-5 py-3 font-medium">Event</th>
@@ -51,7 +51,7 @@ export function AuditLedgerTable({
         </thead>
         <tbody className="divide-y divide-border">
           {entries.map((entry) => (
-            <tr key={entry.id}>
+            <tr key={entry.id} className="transition-colors hover:bg-muted/40">
               <td className="px-5 py-4 font-medium text-foreground">
                 {formatEntityType(entry.entity_type)}
               </td>

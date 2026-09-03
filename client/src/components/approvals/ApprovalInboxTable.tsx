@@ -87,7 +87,7 @@ function ApprovalRow({ approval, onApprove, onReject, onModify, isBusy }: Approv
   };
 
   return (
-    <li className="px-5 py-4">
+    <li className="border-l-2 border-l-transparent px-5 py-4 transition-colors hover:border-l-amber-400 hover:bg-muted/30">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -145,6 +145,7 @@ function ApprovalRow({ approval, onApprove, onReject, onModify, isBusy }: Approv
             <>
               <Button
                 size="sm"
+                variant="success"
                 onClick={() => onApprove(approval.id)}
                 disabled={isBusy}
               >

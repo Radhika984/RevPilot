@@ -64,7 +64,7 @@ export function Playbooks() {
       </div>
 
       <section className="rounded-lg border border-border bg-card">
-        <div className="border-b border-border px-5 py-4">
+        <div className="border-b border-border bg-muted/30 px-5 py-4">
           <h3 className="text-sm font-semibold text-foreground">Recovery timeline</h3>
           <p className="text-xs text-muted-foreground">
             Diagnosis, each recovery step, and the final outcome, in order
